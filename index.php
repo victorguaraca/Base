@@ -1,24 +1,6 @@
 <?php
 include 'db.php'; // Incluir el archivo de conexión a la base de datos
 
-// Crear la tabla 'users' si no existe
-$sql_create_table = "CREATE TABLE IF NOT EXISTS users (
-    id INT(11) AUTO_INCREMENT PRIMARY KEY,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)";
-
-if ($conn->query($sql_create_table) === TRUE) {
-    echo "Tabla 'users' verificada o creada exitosamente.";
-} else {
-    echo "Error al verificar o crear la tabla 'users': " . $conn->error;
-}
-
-// Procesar el formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $first_name = $_POST['first_name'];
     $last_name = $_POST['last_name'];
@@ -26,9 +8,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = password_hash($_POST['password'], PASSWORD_BCRYPT); // Encriptar la contraseña
 
-    $sql = "INSERT INTO users (first_name, last_name, email, username, password) VALUES ('$first_name', '$last_name', '$email', '$username', '$password')";
+    // Verificar si el nombre de usuario ya está registrado
+    $sql_check_username = "SELECT * FROM users WHERE username = '$username'";
+    $result_username = $conn->query($sql_check_username);
 
-    if ($conn->query($sql) === TRUE) {
+    if ($result_username->num_rows > 0) {
+        echo "username_exists";
+        exit();
+    }
+
+    // Verificar si el correo electrónico ya está registrado
+    $sql_check_email = "SELECT * FROM users WHERE email = '$email'";
+    $result_email = $conn->query($sql_check_email);
+
+    if ($result_email->num_rows > 0) {
+        echo "email_exists";
+        exit();
+    }
+
+    // Insertar nuevo usuario
+    $sql_insert = "INSERT INTO users (first_name, last_name, email, username, password) VALUES ('$first_name', '$last_name', '$email', '$username', '$password')";
+
+    if ($conn->query($sql_insert) === TRUE) {
         echo "success";
     } else {
         echo "failure";
